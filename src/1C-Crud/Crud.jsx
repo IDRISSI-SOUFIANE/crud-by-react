@@ -4,15 +4,18 @@ import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { v4 as uuidv4 } from "uuid";
 
 const Crud = () => {
-  // total
+  const tmpRef = useRef(null);
+  // console.log(tmpRef.current);
+
+  const [mood, setMood] = useState("create");
+
   const [total, setTotal] = useState("");
 
-  //  empty inputs
   const [titleInput, setTitleInput] = useState({
     title: "",
     price: "",
@@ -24,43 +27,64 @@ const Crud = () => {
     total: "",
   });
 
-  // save the new object here
-  const todos = [];
+  // console.log(titleInput);
 
-  // loop on data => show on table
-  const [data, setData] = useState(todos);
-  // console.log(data);
+  // Initialize data state with the data from localStorage
+  const [data, setData] = useState([]);
 
-  const newData = JSON.parse(localStorage.getItem("dataTable")) || [];
-  // console.log(newData);
+  // I use useEffect to prevent the Too many re-renders && into an infinite loop of re-render
+  useEffect(() => {
+    const savedData = JSON.parse(localStorage.getItem("dataTable")) || [];
 
-  const dataTable = newData;
-  // console.log(dataTable);
+    savedData.find((sDId) => {
+      if (sDId.id == tmpRef.current) {
+        console.log("yes I am from saveData");
 
-  // create new object for adding to array
+        sDId = titleInput;
+
+        console.log(sDId);
+      }
+    });
+
+    setData(savedData);
+
+    // console.log(savedData.find((dId) => console.log(dId.id)));
+  }, [titleInput]); // The empty depen
+
   const createNewdata = () => {
     const newCount = +titleInput.count;
-    const newData = [...data]; // create a copy of the exciting data array;
-    for (let i = 0; i < newCount; i++) {
-      const addNewObject = {
-        id: uuidv4(),
-        title: titleInput.title,
-        price: titleInput.price,
-        taxes: titleInput.taxes,
-        ads: titleInput.ads,
-        discount: titleInput.discount,
-        category: titleInput.category,
-        total: total, // Note: You may want to recalculate the total here based on individual values
-      };
+    const newData = [...data];
 
-      newData.push(addNewObject); // Update the state with the modified array
+    if (mood === "create") {
+      for (let i = 0; i < newCount; i++) {
+        const addNewObject = {
+          id: uuidv4(),
+          title: titleInput.title,
+          price: titleInput.price,
+          taxes: titleInput.taxes,
+          ads: titleInput.ads,
+          discount: titleInput.discount,
+          category: titleInput.category,
+          total: total,
+        };
 
-      // setData([...data, addNewObject]); => my first solution
+        newData.push(addNewObject);
+      }
+    } else {
+      data.find((dId) => {
+        if (dId.id == tmpRef.current) {
+          console.log("yes");
+
+          dId = titleInput;
+
+          console.log(dId);
+        }
+      });
+
+      console.log(data);
     }
 
     setData(newData);
-
-    // Save the state to localStorage
     localStorage.setItem("dataTable", JSON.stringify(newData));
 
     setTitleInput({
@@ -75,7 +99,6 @@ const Crud = () => {
     });
   };
 
-  // total
   useEffect(() => {
     const pricevalue = +titleInput.price || 0;
     const taxesvalue = +titleInput.taxes || 0;
@@ -86,24 +109,49 @@ const Crud = () => {
     setTotal(parseFloat(result.toFixed(2)) || "TOTAL");
   }, [titleInput.price, titleInput.taxes, titleInput.ads, titleInput.discount]);
 
-  // const removeLine = (id) => {
-  //   console.log(id);
-  //   // dataTable.filter((DtId) => console.log(DtId.id == id));
-
-  //   dataTable.filter((DtId) => {
-  //     if (DtId.id == id) {
-  //       // console.log("yes");
-  //       dataTable.splice(id, 1);
+  // const updateLine = (id) => {
+  //   data.find((chossenLine) => {
+  //     if (chossenLine.id == id) {
+  //       setMood("update");
+  //       // setDisable(true);
+  //       setTitleInput({
+  //         title: chossenLine.title,
+  //         price: chossenLine.price,
+  //         taxes: chossenLine.taxes,
+  //         ads: chossenLine.ads,
+  //         discount: chossenLine.discount,
+  //         count: chossenLine.count,
+  //         category: chossenLine.category,
+  //         total: chossenLine.total,
+  //       });
+  //       tmpRef.current = id;
   //     }
-  //     return dataTable;
   //   });
   // };
 
-  const removeLine = (id) => {
-    const delteChoosenLine = dataTable.filter((DtId) => DtId.id !== id);
-    setData(delteChoosenLine);
-    localStorage.setItem("dataTable", JSON.stringify(delteChoosenLine));
-  };
+  // const updateLine = (id) => {
+  //   setData((prevData) => {
+  //     return prevData.map((line) => {
+  //       if (line.id === id) {
+  //         return {
+  //           ...line,
+  //           title: titleInput.title,
+  //           price: titleInput.price,
+  //           taxes: titleInput.taxes,
+  //           ads: titleInput.ads,
+  //           discount: titleInput.discount,
+  //           count: titleInput.count,
+  //           category: titleInput.category,
+  //           total: titleInput.total,
+  //         };
+  //       }
+  //       return line;
+  //     });
+  //   });
+
+  //   setMood("update");
+  //   tmpRef.current = id;
+  // };
 
   return (
     <section className="crud">
@@ -191,6 +239,7 @@ const Crud = () => {
 
             <TextField
               sx={{ width: "100%", margin: "0px 0px 30px 0px" }}
+              disabled={mood == "update" ? true : false}
               id="count"
               label="Count"
               type="number"
@@ -220,6 +269,7 @@ const Crud = () => {
                 titleInput.count == "" ||
                 titleInput.category == ""
               }
+              className="create"
               type="button"
               sx={{
                 width: "100%",
@@ -232,7 +282,7 @@ const Crud = () => {
                 createNewdata();
               }}
             >
-              Create
+              {mood === "create" ? "Create" : "Update"}
             </Button>
 
             <TextField
@@ -294,7 +344,7 @@ const Crud = () => {
                 </tr>
               ))} */}
 
-              {dataTable.map((line) => (
+              {data.map((line) => (
                 <tr key={line.id}>
                   <td>{line.title}</td>
                   <td>{line.price + "$"}</td>
@@ -304,12 +354,19 @@ const Crud = () => {
                   <td>{line.total + "$"}</td>
                   <td>{line.category}</td>
                   <td className="update">
-                    <button>UPDATE</button>
+                    <button
+                      className="update"
+                      onClick={() => {
+                        updateLine(line.id);
+                      }}
+                    >
+                      UPDATE
+                    </button>
                   </td>
                   <td
                     className="delete"
                     onClick={() => {
-                      removeLine(line.id);
+                      // removeLine(line.id);
                     }}
                   >
                     <button>DELETE</button>
