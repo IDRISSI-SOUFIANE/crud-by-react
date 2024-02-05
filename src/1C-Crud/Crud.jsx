@@ -27,28 +27,16 @@ const Crud = () => {
     total: "",
   });
 
-  // console.log(titleInput);
-
   // Initialize data state with the data from localStorage
   const [data, setData] = useState([]);
+
+  const totalItems = data.length;
 
   // I use useEffect to prevent the Too many re-renders && into an infinite loop of re-render
   useEffect(() => {
     const savedData = JSON.parse(localStorage.getItem("dataTable")) || [];
 
-    savedData.find((sDId) => {
-      if (sDId.id == tmpRef.current) {
-        console.log("yes I am from saveData");
-
-        sDId = titleInput;
-
-        console.log(sDId);
-      }
-    });
-
     setData(savedData);
-
-    // console.log(savedData.find((dId) => console.log(dId.id)));
   }, [titleInput]); // The empty depen
 
   const createNewdata = () => {
@@ -65,26 +53,16 @@ const Crud = () => {
           ads: titleInput.ads,
           discount: titleInput.discount,
           category: titleInput.category,
-          total: total,
+          total: parseFloat(total),
         };
 
         newData.push(addNewObject);
       }
-    } else {
-      data.find((dId) => {
-        if (dId.id == tmpRef.current) {
-          console.log("yes");
-
-          dId = titleInput;
-
-          console.log(dId);
-        }
-      });
-
-      console.log(data);
     }
 
     setData(newData);
+
+    // Update local storage with the modified data
     localStorage.setItem("dataTable", JSON.stringify(newData));
 
     setTitleInput({
@@ -99,6 +77,63 @@ const Crud = () => {
     });
   };
 
+  const updateLine = (id) => {
+    data.find((chossenLine) => {
+      if (chossenLine.id == id) {
+        setMood("update");
+        setTitleInput({
+          title: chossenLine.title,
+          price: chossenLine.price,
+          taxes: chossenLine.taxes,
+          ads: chossenLine.ads,
+          discount: chossenLine.discount,
+          count: chossenLine.count,
+          category: chossenLine.category,
+          total: chossenLine.total,
+        });
+        tmpRef.current = id;
+      }
+    });
+  };
+
+  // updateData && updateLine connected with each other
+  const updateData = () => {
+    if (mood === "update") {
+      const updateData = data.map((upData) => {
+        if (upData.id === tmpRef.current) {
+          console.log(upData);
+          return {
+            id: upData.id,
+            title: titleInput.title,
+            price: titleInput.price,
+            taxes: titleInput.taxes,
+            ads: titleInput.ads,
+            discount: titleInput.discount,
+            category: titleInput.category,
+            total: parseFloat(total),
+          };
+        } else {
+          return upData;
+        }
+      });
+
+      // Update local storage with the modified data
+      localStorage.setItem("dataTable", JSON.stringify(updateData));
+
+      setData(updateData);
+    }
+  };
+
+  const removeLine = (id) => {
+    const removeData = data.filter((rLine) => {
+      return rLine.id != id;
+    });
+    // Update local storage with the modified data
+    localStorage.setItem("dataTable", JSON.stringify(removeData));
+
+    setData(removeData);
+  };
+
   useEffect(() => {
     const pricevalue = +titleInput.price || 0;
     const taxesvalue = +titleInput.taxes || 0;
@@ -109,49 +144,11 @@ const Crud = () => {
     setTotal(parseFloat(result.toFixed(2)) || "TOTAL");
   }, [titleInput.price, titleInput.taxes, titleInput.ads, titleInput.discount]);
 
-  // const updateLine = (id) => {
-  //   data.find((chossenLine) => {
-  //     if (chossenLine.id == id) {
-  //       setMood("update");
-  //       // setDisable(true);
-  //       setTitleInput({
-  //         title: chossenLine.title,
-  //         price: chossenLine.price,
-  //         taxes: chossenLine.taxes,
-  //         ads: chossenLine.ads,
-  //         discount: chossenLine.discount,
-  //         count: chossenLine.count,
-  //         category: chossenLine.category,
-  //         total: chossenLine.total,
-  //       });
-  //       tmpRef.current = id;
-  //     }
-  //   });
-  // };
-
-  // const updateLine = (id) => {
-  //   setData((prevData) => {
-  //     return prevData.map((line) => {
-  //       if (line.id === id) {
-  //         return {
-  //           ...line,
-  //           title: titleInput.title,
-  //           price: titleInput.price,
-  //           taxes: titleInput.taxes,
-  //           ads: titleInput.ads,
-  //           discount: titleInput.discount,
-  //           count: titleInput.count,
-  //           category: titleInput.category,
-  //           total: titleInput.total,
-  //         };
-  //       }
-  //       return line;
-  //     });
-  //   });
-
-  //   setMood("update");
-  //   tmpRef.current = id;
-  // };
+  const DeleteAll = () => {
+    // alert("Delete All");
+    window.localStorage.clear();
+    setData(data.length > 0 ? [] : data);
+  };
 
   return (
     <section className="crud">
@@ -239,14 +236,15 @@ const Crud = () => {
 
             <TextField
               sx={{ width: "100%", margin: "0px 0px 30px 0px" }}
-              disabled={mood == "update" ? true : false}
               id="count"
               label="Count"
               type="number"
-              value={titleInput.count}
-              onChange={(event) => {
-                setTitleInput({ ...titleInput, count: event.target.value });
+              // value={titleInput.count}
+              value={mood === "update" ? "" : titleInput.count}
+              onChange={(e) => {
+                setTitleInput({ ...titleInput, count: e.target.value });
               }}
+              disabled={mood === "update"}
             />
             <TextField
               sx={{ width: "100%", margin: "0px 0px 30px 0px" }}
@@ -254,8 +252,8 @@ const Crud = () => {
               label="Category"
               value={titleInput.category}
               type="text"
-              onChange={(event) => {
-                setTitleInput({ ...titleInput, category: event.target.value });
+              onChange={(e) => {
+                setTitleInput({ ...titleInput, category: e.target.value });
               }}
             />
             <Button
@@ -280,6 +278,12 @@ const Crud = () => {
               variant="outlined"
               onClick={() => {
                 createNewdata();
+
+                setMood(mood === "update" ? "create" : "create");
+
+                {
+                  mood === "update" ? updateData() : "";
+                }
               }}
             >
               {mood === "create" ? "Create" : "Update"}
@@ -301,8 +305,9 @@ const Crud = () => {
               }}
               variant="outlined"
               color="error"
+              onClick={DeleteAll}
             >
-              DELETE ALL
+              DELETE ALL {`(${totalItems})`}
             </Button>
           </Box>
         </Container>
@@ -325,27 +330,9 @@ const Crud = () => {
               </tr>
             </thead>
 
-            <tbody>
-              {/* {data.map((todo) => (
-                <tr key={todo.id}>
-                  <td>{todo.title}</td>
-                  <td>{todo.price + "$"}</td>
-                  <td>{todo.taxes + "%"}</td>
-                  <td>{todo.ads + "%"}</td>
-                  <td>{todo.discount + "%"}</td>
-                  <td>{todo.total + "$"}</td>
-                  <td>{todo.category}</td>
-                  <td className="update">
-                    <button>UPDATE</button>
-                  </td>
-                  <td className="delete">
-                    <button>DELETE</button>
-                  </td>
-                </tr>
-              ))} */}
-
-              {data.map((line) => (
-                <tr key={line.id}>
+            {data.map((line) => (
+              <tbody key={line.id}>
+                <tr>
                   <td>{line.title}</td>
                   <td>{line.price + "$"}</td>
                   <td>{line.taxes + "%"}</td>
@@ -366,14 +353,14 @@ const Crud = () => {
                   <td
                     className="delete"
                     onClick={() => {
-                      // removeLine(line.id);
+                      removeLine(line.id);
                     }}
                   >
                     <button>DELETE</button>
                   </td>
                 </tr>
-              ))}
-            </tbody>
+              </tbody>
+            ))}
           </table>
         </Container>
       </div>
