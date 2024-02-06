@@ -10,7 +10,6 @@ import { v4 as uuidv4 } from "uuid";
 
 const Crud = () => {
   const tmpRef = useRef(null);
-  // console.log(tmpRef.current);
 
   const [mood, setMood] = useState("create");
 
@@ -26,6 +25,9 @@ const Crud = () => {
     category: "",
     total: "",
   });
+
+  // const [searchInput, setSearchInput] = useState();
+  // console.log(searchInput);
 
   // Initialize data state with the data from localStorage
   const [data, setData] = useState([]);
@@ -149,6 +151,25 @@ const Crud = () => {
     window.localStorage.clear();
     setData(data.length > 0 ? [] : data);
   };
+
+  // function of search
+  let searchInput;
+  const matchtesValue = (id) => {
+    // console.log(id);
+    // console.log(searchInput);
+    // console.log(id == searchInput && true);
+    if (id == searchInput) {
+      console.log("Yes True");
+      const searchOnTable = data.map((line) => console.log(line.title));
+      console.log(searchOnTable);
+    }
+  };
+
+  // console.log(searchInput);
+
+  // useEffect(() => {
+  // matchtesValue();
+  // }, []);
 
   return (
     <section className="crud">
@@ -293,6 +314,12 @@ const Crud = () => {
               sx={{ width: "100%", margin: "0px 0px 30px 0px" }}
               id="search"
               label="Search"
+              // value= {};
+              onChange={(e) => {
+                // setSearchInput(e.target.value);
+                searchInput = e.target.value;
+                matchtesValue(searchInput);
+              }}
             />
 
             <Button
