@@ -26,8 +26,8 @@ const Crud = () => {
     total: "",
   });
 
-  // const [searchInput, setSearchInput] = useState();
-  // console.log(searchInput);
+  const [searchInput, setSearchInput] = useState();
+  console.log(searchInput);
 
   // Initialize data state with the data from localStorage
   const [data, setData] = useState([]);
@@ -151,25 +151,6 @@ const Crud = () => {
     window.localStorage.clear();
     setData(data.length > 0 ? [] : data);
   };
-
-  // function of search
-  let searchInput;
-  const matchtesValue = (id) => {
-    // console.log(id);
-    // console.log(searchInput);
-    // console.log(id == searchInput && true);
-    if (id == searchInput) {
-      console.log("Yes True");
-      const searchOnTable = data.map((line) => console.log(line.title));
-      console.log(searchOnTable);
-    }
-  };
-
-  // console.log(searchInput);
-
-  // useEffect(() => {
-  // matchtesValue();
-  // }, []);
 
   return (
     <section className="crud">
@@ -314,12 +295,7 @@ const Crud = () => {
               sx={{ width: "100%", margin: "0px 0px 30px 0px" }}
               id="search"
               label="Search"
-              // value= {};
-              onChange={(e) => {
-                // setSearchInput(e.target.value);
-                searchInput = e.target.value;
-                matchtesValue(searchInput);
-              }}
+              onChange={(e) => setSearchInput(e.target.value)}
             />
 
             <Button
@@ -357,37 +333,43 @@ const Crud = () => {
               </tr>
             </thead>
 
-            {data.map((line) => (
-              <tbody key={line.id}>
-                <tr>
-                  <td>{line.title}</td>
-                  <td>{line.price + "$"}</td>
-                  <td>{line.taxes + "%"}</td>
-                  <td>{line.ads + "%"}</td>
-                  <td>{line.discount + "%"}</td>
-                  <td>{line.total + "$"}</td>
-                  <td>{line.category}</td>
-                  <td className="update">
-                    <button
-                      className="update"
+            {data
+              .filter((line) => {
+                return searchInput
+                  ? line.title.toLowerCase().includes(searchInput.toLowerCase())
+                  : true;
+              })
+              .map((line) => (
+                <tbody key={line.id}>
+                  <tr>
+                    <td>{line.title}</td>
+                    <td>{line.price + "$"}</td>
+                    <td>{line.taxes + "%"}</td>
+                    <td>{line.ads + "%"}</td>
+                    <td>{line.discount + "%"}</td>
+                    <td>{line.total + "$"}</td>
+                    <td>{line.category}</td>
+                    <td className="update">
+                      <button
+                        className="update"
+                        onClick={() => {
+                          updateLine(line.id);
+                        }}
+                      >
+                        UPDATE
+                      </button>
+                    </td>
+                    <td
+                      className="delete"
                       onClick={() => {
-                        updateLine(line.id);
+                        removeLine(line.id);
                       }}
                     >
-                      UPDATE
-                    </button>
-                  </td>
-                  <td
-                    className="delete"
-                    onClick={() => {
-                      removeLine(line.id);
-                    }}
-                  >
-                    <button>DELETE</button>
-                  </td>
-                </tr>
-              </tbody>
-            ))}
+                      <button>DELETE</button>
+                    </td>
+                  </tr>
+                </tbody>
+              ))}
           </table>
         </Container>
       </div>
@@ -396,3 +378,29 @@ const Crud = () => {
 };
 
 export default Crud;
+
+/**
+ * 1 - Filtering Data:
+  
+  .filter((line) => {
+  return searchInput
+    ? line.title.toLowerCase().includes(searchInput.toLowerCase())
+    : true;
+})
+
+ * The filter method is used to filter the data array based on the conditions provided in the callback function.
+
+ * For each line in the array, it checks whether searchInput is truthy (not empty or undefined). If it is, it filters the data based on whether the lowercase title of the line includes the lowercase searchInput. This is a case-insensitive search.
+
+ * If searchInput is falsy (empty or undefined), it returns true, meaning all lines are included.
+
+ *2 - Mapping Filtered Data to Table Rows:
+
+ * .map((line) => (
+  <tbody key={line.id}>
+    <tr>
+       /... Table cells for each attribute of the line /
+      </tr>
+      </tbody>
+    ))
+ */
